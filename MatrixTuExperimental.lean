@@ -32,16 +32,16 @@ theorem Matrix.isTotallyUnimodular_of_isBlockDiagonal {m n : Type*}
 theorem Matrix.isTotallyUnimodular_of_isBlockDiagonal2 {m n : Type*}
     {A : Matrix m n R} {ι : m → Fin 2} {γ : n → Fin 2}
     (hA : A.IsBlockDiagonal ι γ)
-    (hAa : ∀ a : Fin 2, (A.submatrix
-        (fun (I : { i : m // ι i = a }) => I.val)
-        (fun (J : { j : n // γ j = a }) => J.val)
+    (hAk : ∀ k : Fin 2, (A.submatrix
+        (fun (I : { i : m // ι i = k }) => I.val)
+        (fun (J : { j : n // γ j = k }) => J.val)
       ).IsTotallyUnimodular):
     A.IsTotallyUnimodular := by
   intro k f g hf hg
-  have hA₀ := hAa 0
-  have hA₁ := hAa 1
+  have hA₀ := hAk 0
+  have hA₁ := hAk 1
   rw [Matrix.isTotallyUnimodular_iff] at hA₀ hA₁
-  clear hAa
+  clear hAk
   if hxy : Fintype.card { i₁ : Fin k // ι (f i₁) = 0 }
          = Fintype.card { j₁ : Fin k // γ (g j₁) = 0 }
          ∧ Fintype.card { i₂ : Fin k // ι (f i₂) = 1 }
