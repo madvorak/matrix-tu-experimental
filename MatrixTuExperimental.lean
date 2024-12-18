@@ -52,9 +52,25 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ : Type*}
         · aesop
         · simpa [hj] using j.property
       · simpa [hi] using i.property
-    sorry
-    -- TODO why cannot we `rw [hA]` here?
-  · sorry
+    erw [hA, Matrix.reindex_isTotallyUnimodular]
+    exact hA₁
+  · have hA :
+      (fromBlocks A₁ 0 0 A₂).submatrix
+        (fun (I : { i : m₁ ⊕ m₂ // i.casesOn 0 1 = (1 : Fin 2) }) => I.val)
+        (fun (J : { j : n₁ ⊕ n₂ // j.casesOn 0 1 = (1 : Fin 2) }) => J.val)
+      = A₂.reindex
+          (Equiv.ofBijective (fun i₂ => ⟨Sum.inr i₂, rfl⟩)
+            ⟨fun _ _ _ => by aesop, fun _ => by aesop⟩)
+          (Equiv.ofBijective (fun j₂ => ⟨Sum.inr j₂, rfl⟩)
+            ⟨fun _ _ _ => by aesop, fun _ => by aesop⟩)
+    · ext i j
+      cases hi : i.val
+      · simpa [hi] using i.property
+      · cases hj : j.val
+        · simpa [hj] using j.property
+        · aesop
+    erw [hA, Matrix.reindex_isTotallyUnimodular]
+    exact hA₂
 
 end commring
 
