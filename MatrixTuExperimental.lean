@@ -7,6 +7,11 @@ variable {Z : Type*} [Zero Z]
 def Matrix.IsBlockDiagonal {m n : Type*} (A : Matrix m n Z) {α : Type*} (ι : m → α) (γ : n → α) : Prop :=
   ∀ i : m, ∀ j : n, ι i ≠ γ j → A i j = 0
 
+def Matrix.isBlockDiagonal_unit {m n : Type*} (A : Matrix m n Z) :
+    A.IsBlockDiagonal (fun _ => ()) (fun _ => ()) := by
+  intro _ _
+  simp
+
 lemma Matrix.fromBlocks_isBlockDiagonal {m₁ m₂ n₁ n₂ : Type*}
     (A₁ : Matrix m₁ n₁ Z) (A₂ : Matrix m₂ n₂ Z) :
     (fromBlocks A₁ 0 0 A₂).IsBlockDiagonal (α := Fin 2) (Sum.casesOn · 0 1) (Sum.casesOn · 0 1) := by
@@ -18,13 +23,41 @@ section commring
 
 variable {R : Type*} [CommRing R]
 
+theorem Matrix.det_of_isSquareDiagonal {m α R : Type*} [CommRing R]
+    [DecidableEq m] [Fintype m] [DecidableEq α] [Fintype α]
+    {A : Matrix m m R} {ι : m → α}
+    [∀ a : α, DecidablePred (· ∈ (ι ⁻¹' {a}))]
+    (hA : A.IsBlockDiagonal ι ι) :
+    A.det = ∏ a : α, (A.submatrix (Subtype.val : ι ⁻¹' {a} → m) (Subtype.val : ι ⁻¹' {a} → m)).det := by
+  sorry
+
+theorem Matrix.det_of_isSquareDiagonal_2 {m R : Type*} [CommRing R] [DecidableEq m] [Fintype m]
+    {A : Matrix m m R} {ι : m → Fin 2}
+    [∀ k : Fin 2, DecidablePred (· ∈ (ι ⁻¹' {k}))]
+    (hA : A.IsBlockDiagonal ι ι) :
+    A.det =
+      (A.submatrix (Subtype.val : ι ⁻¹' {0} → m) (Subtype.val : ι ⁻¹' {0} → m)).det *
+      (A.submatrix (Subtype.val : ι ⁻¹' {1} → m) (Subtype.val : ι ⁻¹' {1} → m)).det := by
+  sorry
+
+theorem Matrix.IsBlockDiagonal.det {m α : Type} [DecidableEq m] [Fintype m] [DecidableEq α] [Fintype α]
+    {A : Matrix m m R} {ι γ : m → α}
+    [∀ a : α, Decidable (∃ e : (ι ⁻¹' {a}) ≃ (γ ⁻¹' {a}), True)]
+    [∀ a : α, DecidablePred (· ∈ (ι ⁻¹' {a}))]
+    (hA : A.IsBlockDiagonal ι γ) :
+    A.det = if hιγ : ∀ a : α, ∃ e : (ι ⁻¹' {a}) ≃ (γ ⁻¹' {a}), True then
+      ∏ a : α, (A.submatrix (Subtype.val : (ι ⁻¹' {a} → m)) ((Subtype.val : (γ ⁻¹' {a} → m)) ∘ (hιγ a).choose)).det
+    else
+      0 := by
+  sorry
+
 theorem Matrix.isTotallyUnimodular_of_isBlockDiagonal {m n : Type*}
     {A : Matrix m n R} {α : Type*} {ι : m → α} {γ : n → α}
     (hA : A.IsBlockDiagonal ι γ)
     (hAa : ∀ a : α, (A.submatrix
         (fun (I : { i : m // ι i = a }) => I.val)
         (fun (J : { j : n // γ j = a }) => J.val)
-      ).IsTotallyUnimodular):
+      ).IsTotallyUnimodular) :
     A.IsTotallyUnimodular := by
   intro k f g hf hg
   sorry
@@ -35,7 +68,7 @@ theorem Matrix.isTotallyUnimodular_of_isBlockDiagonal2 {m n : Type*}
     (hAk : ∀ k : Fin 2, (A.submatrix
         (fun (I : { i : m // ι i = k }) => I.val)
         (fun (J : { j : n // γ j = k }) => J.val)
-      ).IsTotallyUnimodular):
+      ).IsTotallyUnimodular) :
     A.IsTotallyUnimodular := by
   intro k f g hf hg
   have hA₀ := hAk 0
