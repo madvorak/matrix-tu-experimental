@@ -1,136 +1,88 @@
 import Mathlib
 
-section zero
 
-variable {Z : Type*} [Zero Z]
-
-def Matrix.IsBlockDiagonal {m n : Type*} (A : Matrix m n Z) {α : Type*} (ι : m → α) (γ : n → α) : Prop :=
-  ∀ i : m, ∀ j : n, ι i ≠ γ j → A i j = 0
-
-def Matrix.isBlockDiagonal_unit {m n : Type*} (A : Matrix m n Z) :
-    A.IsBlockDiagonal (fun _ => ()) (fun _ => ()) := by
-  intro _ _
-  simp
-
-lemma Matrix.fromBlocks_isBlockDiagonal {m₁ m₂ n₁ n₂ : Type*}
-    (A₁ : Matrix m₁ n₁ Z) (A₂ : Matrix m₂ n₂ Z) :
-    (fromBlocks A₁ 0 0 A₂).IsBlockDiagonal (α := Fin 2) (Sum.casesOn · 0 1) (Sum.casesOn · 0 1) := by
-  simp [Matrix.IsBlockDiagonal]
-
-end zero
-
-section commring
-
-variable {R : Type*} [CommRing R]
-
-theorem Matrix.det_of_isSquareDiagonal {m α R : Type*} [CommRing R]
-    [DecidableEq m] [Fintype m] [DecidableEq α] [Fintype α]
-    {A : Matrix m m R} {ι : m → α}
-    [∀ a : α, DecidablePred (· ∈ (ι ⁻¹' {a}))]
-    (hA : A.IsBlockDiagonal ι ι) :
-    A.det = ∏ a : α, (A.submatrix (Subtype.val : ι ⁻¹' {a} → m) (Subtype.val : ι ⁻¹' {a} → m)).det := by
+theorem Matrix.blockDiagonal'_isTotallyUnimodular (m n : Fin 2 → Type*)
+    (R : Type) [CommRing R]
+    [∀ k : Fin 2, DecidableEq (m k)] [∀ k : Fin 2, Fintype (m k)]
+    [∀ k : Fin 2, DecidableEq (n k)] [∀ k : Fin 2, Fintype (n k)]
+    (M : Π k : Fin 2, Matrix (m k) (n k) R)
+    (hM : ∀ k : Fin 2, (M k).IsTotallyUnimodular) :
+    (Matrix.blockDiagonal' M).IsTotallyUnimodular := by
   sorry
 
-theorem Matrix.det_of_isSquareDiagonal_2 {m R : Type*} [CommRing R] [DecidableEq m] [Fintype m]
-    {A : Matrix m m R} {ι : m → Fin 2}
-    [∀ k : Fin 2, DecidablePred (· ∈ (ι ⁻¹' {k}))]
-    (hA : A.IsBlockDiagonal ι ι) :
-    A.det =
-      (A.submatrix (Subtype.val : ι ⁻¹' {0} → m) (Subtype.val : ι ⁻¹' {0} → m)).det *
-      (A.submatrix (Subtype.val : ι ⁻¹' {1} → m) (Subtype.val : ι ⁻¹' {1} → m)).det := by
-  sorry
+instance {ι : Fin 2 → Type*} [hι0 : DecidableEq (ι 0)] [hι1 : DecidableEq (ι 1)] :
+    ∀ k : Fin 2, DecidableEq (ι k) := by
+  intro k
+  if hk : k = 0 then
+    simpa [hk] using hι0
+  else
+    simpa [k.eq_one_of_neq_zero hk] using hι1
+/-
+instance {ι : Fin 2 → Type*} [hι0 : Fintype (ι 0)] [hι1 : Fintype (ι 1)] :
+    ∀ k : Fin 2, Fintype (ι k) := by
+  intro k
+  if hk : k = 0 then
+    simpa [hk] using hι0
+  else
+    simpa [k.eq_one_of_neq_zero hk] using hι1
+-/
 
-theorem Matrix.IsBlockDiagonal.det {m α : Type} [DecidableEq m] [Fintype m] [DecidableEq α] [Fintype α]
-    {A : Matrix m m R} {ι γ : m → α}
-    [∀ a : α, Decidable (∃ e : (ι ⁻¹' {a}) ≃ (γ ⁻¹' {a}), True)]
-    [∀ a : α, DecidablePred (· ∈ (ι ⁻¹' {a}))]
-    (hA : A.IsBlockDiagonal ι γ) :
-    A.det = if hιγ : ∀ a : α, ∃ e : (ι ⁻¹' {a}) ≃ (γ ⁻¹' {a}), True then
-      ∏ a : α, (A.submatrix (Subtype.val : (ι ⁻¹' {a} → m)) ((Subtype.val : (γ ⁻¹' {a} → m)) ∘ (hιγ a).choose)).det
-    else
-      0 := by
-  sorry
-
-theorem Matrix.isTotallyUnimodular_of_isBlockDiagonal {m n : Type*}
-    {A : Matrix m n R} {α : Type*} {ι : m → α} {γ : n → α}
-    (hA : A.IsBlockDiagonal ι γ)
-    (hAa : ∀ a : α, (A.submatrix
-        (fun (I : { i : m // ι i = a }) => I.val)
-        (fun (J : { j : n // γ j = a }) => J.val)
-      ).IsTotallyUnimodular) :
-    A.IsTotallyUnimodular := by
-  intro k f g hf hg
-  sorry
-
-theorem Matrix.isTotallyUnimodular_of_isBlockDiagonal2 {m n : Type*}
-    {A : Matrix m n R} {ι : m → Fin 2} {γ : n → Fin 2}
-    (hA : A.IsBlockDiagonal ι γ)
-    (hAk : ∀ k : Fin 2, (A.submatrix
-        (fun (I : { i : m // ι i = k }) => I.val)
-        (fun (J : { j : n // γ j = k }) => J.val)
-      ).IsTotallyUnimodular) :
-    A.IsTotallyUnimodular := by
-  intro k f g hf hg
-  have hA₀ := hAk 0
-  have hA₁ := hAk 1
-  rw [Matrix.isTotallyUnimodular_iff] at hA₀ hA₁
-  clear hAk
-  if hxy : Fintype.card { i₁ : Fin k // ι (f i₁) = 0 }
-         = Fintype.card { j₁ : Fin k // γ (g j₁) = 0 }
-         ∧ Fintype.card { i₂ : Fin k // ι (f i₂) = 1 }
-         = Fintype.card { j₂ : Fin k // γ (g j₂) = 1 }
-  then -- the square case
-    sorry
-  else -- non-square cases
-    sorry
-
-theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ : Type*}
+theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [CommRing R]
     [Fintype m₁] [DecidableEq m₁] [Fintype n₁] [DecidableEq n₁]
     [Fintype m₂] [DecidableEq m₂] [Fintype n₂] [DecidableEq n₂]
     {A₁ : Matrix m₁ n₁ R} (hA₁ : A₁.IsTotallyUnimodular)
     {A₂ : Matrix m₂ n₂ R} (hA₂ : A₂.IsTotallyUnimodular) :
     (fromBlocks A₁ 0 0 A₂).IsTotallyUnimodular := by
-  apply Matrix.isTotallyUnimodular_of_isBlockDiagonal2 (Matrix.fromBlocks_isBlockDiagonal A₁ A₂)
-  intro k
-  fin_cases k
-  · have hA :
-      (fromBlocks A₁ 0 0 A₂).submatrix
-        (fun (I : { i : m₁ ⊕ m₂ // i.casesOn 0 1 = (0 : Fin 2) }) => I.val)
-        (fun (J : { j : n₁ ⊕ n₂ // j.casesOn 0 1 = (0 : Fin 2) }) => J.val)
-      = A₁.reindex
-          (Equiv.ofBijective (fun i₁ => ⟨Sum.inl i₁, rfl⟩)
-            ⟨fun _ _ _ => by aesop, fun _ => by aesop⟩)
-          (Equiv.ofBijective (fun j₁ => ⟨Sum.inl j₁, rfl⟩)
-            ⟨fun _ _ _ => by aesop, fun _ => by aesop⟩)
-    · ext i j
-      cases hi : i.val
-      · cases hj : j.val
-        · aesop
-        · simpa [hj] using j.property
-      · simpa [hi] using i.property
-    erw [hA, Matrix.reindex_isTotallyUnimodular]
-    exact hA₁
-  · have hA :
-      (fromBlocks A₁ 0 0 A₂).submatrix
-        (fun (I : { i : m₁ ⊕ m₂ // i.casesOn 0 1 = (1 : Fin 2) }) => I.val)
-        (fun (J : { j : n₁ ⊕ n₂ // j.casesOn 0 1 = (1 : Fin 2) }) => J.val)
-      = A₂.reindex
-          (Equiv.ofBijective (fun i₂ => ⟨Sum.inr i₂, rfl⟩)
-            ⟨fun _ _ _ => by aesop, fun _ => by aesop⟩)
-          (Equiv.ofBijective (fun j₂ => ⟨Sum.inr j₂, rfl⟩)
-            ⟨fun _ _ _ => by aesop, fun _ => by aesop⟩)
-    · ext i j
-      cases hi : i.val
-      · simpa [hi] using i.property
-      · cases hj : j.val
-        · simpa [hj] using j.property
-        · aesop
-    erw [hA, Matrix.reindex_isTotallyUnimodular]
-    exact hA₂
-
-end commring
-
-/-
-#check Matrix.det_fromBlocks_zero₁₂
-#check Matrix.det_of_lowerTriangular
--/
+  convert
+    Matrix.IsTotallyUnimodular.reindex ?_ ?_
+      (Matrix.blockDiagonal'_isTotallyUnimodular ![m₁, m₂] ![n₁, n₂] R
+        (fun k => if hk : k = 0 then hk ▸ A₁ else k.eq_one_of_neq_zero hk ▸ A₂)
+        (fun k => if hk : k = 0 then (by subst hk; simpa using hA₁) else (by
+          have hk' := k.eq_one_of_neq_zero hk
+          subst hk'
+          simpa using hA₂
+        )))
+  /-
+        (fun k => match k with
+        | 0 => A₁
+        | 1 => A₂)
+        (fun k => match k with
+        | 0 => hA₁
+        | 1 => hA₂)
+  -/
+  swap
+  · apply Equiv.ofBijective (
+      fun ⟨i, m⟩ => if hi : i = 0 then Sum.inl (by subst hi; exact m) else Sum.inr (by
+        have hi' := i.eq_one_of_neq_zero hi
+        subst hi'
+        exact m
+      ))
+    sorry
+  swap
+  · apply Equiv.ofBijective (
+      fun ⟨i, n⟩ => if hi : i = 0 then Sum.inl (by subst hi; exact n) else Sum.inr (by
+        have hi' := i.eq_one_of_neq_zero hi
+        subst hi'
+        exact n
+      ))
+    sorry
+  swap -- TODO why cannot I use the same instance for `Fintype` as I did with `DecidableEq` ?
+  · intro k
+    if hk : k = 0 then
+      simp [hk]
+      assumption
+    else
+      have hk' := k.eq_one_of_neq_zero hk
+      subst hk'
+      assumption
+  swap -- TODO why cannot I use the same instance for `Fintype` as I did with `DecidableEq` ?
+  · intro k
+    if hk : k = 0 then
+      simp [hk]
+      assumption
+    else
+      have hk' := k.eq_one_of_neq_zero hk
+      subst hk'
+      assumption
+  ext i j
+  cases hi : i <;> cases hj : j <;> sorry -- simp [Matrix.blockDiagonal', hi, hj]
