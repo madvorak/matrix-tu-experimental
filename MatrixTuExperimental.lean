@@ -27,6 +27,8 @@ instance {ι : Fin 2 → Type*} [hι0 : Fintype (ι 0)] [hι1 : Fintype (ι 1)] 
     simpa [k.eq_one_of_neq_zero hk] using hι1
 -/
 
+attribute [-simp] Fintype.card_ofIsEmpty Fintype.card_ofSubsingleton
+
 theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [CommRing R]
     [Fintype m₁] [DecidableEq m₁] [Fintype n₁] [DecidableEq n₁]
     [Fintype m₂] [DecidableEq m₂] [Fintype n₂] [DecidableEq n₂]
@@ -35,37 +37,41 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
     (fromBlocks A₁ 0 0 A₂).IsTotallyUnimodular := by
   convert
     Matrix.IsTotallyUnimodular.reindex ?_ ?_
-      (Matrix.blockDiagonal'_isTotallyUnimodular ![m₁, m₂] ![n₁, n₂] R
-        (fun k => if hk : k = 0 then hk ▸ A₁ else k.eq_one_of_neq_zero hk ▸ A₂)
-        (fun k => if hk : k = 0 then (by subst hk; simpa using hA₁) else (by
-          have hk' := k.eq_one_of_neq_zero hk
-          subst hk'
-          simpa using hA₂
-        )))
-  /-
-        (fun k => match k with
-        | 0 => A₁
-        | 1 => A₂)
-        (fun k => match k with
-        | 0 => hA₁
-        | 1 => hA₂)
-  -/
+      (Matrix.blockDiagonal'_isTotallyUnimodular ![m₁, m₂] ![n₁, n₂] R (
+        fun k => match k with
+          | 0 => A₁
+          | 1 => A₂
+      ) (
+        fun k => match k with
+          | 0 => hA₁
+          | 1 => hA₂
+      ) )
   swap
-  · apply Equiv.ofBijective (
-      fun ⟨i, m⟩ => if hi : i = 0 then Sum.inl (by subst hi; exact m) else Sum.inr (by
-        have hi' := i.eq_one_of_neq_zero hi
-        subst hi'
-        exact m
-      ))
-    sorry
+  · apply Equiv.ofBijective (fun ⟨i, m⟩ =>
+      match i with
+        | 0 => Sum.inl m
+        | 1 => Sum.inr m
+      )
+    constructor
+    · intro x y hxy
+      aesop
+    · intro z
+      cases z with
+      | inl z₁ => exact ⟨⟨0, z₁⟩, by simp⟩
+      | inr z₂ => exact ⟨⟨1, z₂⟩, by simp⟩
   swap
-  · apply Equiv.ofBijective (
-      fun ⟨i, n⟩ => if hi : i = 0 then Sum.inl (by subst hi; exact n) else Sum.inr (by
-        have hi' := i.eq_one_of_neq_zero hi
-        subst hi'
-        exact n
-      ))
-    sorry
+  · apply Equiv.ofBijective (fun ⟨i, n⟩ =>
+      match i with
+        | 0 => Sum.inl n
+        | 1 => Sum.inr n
+      )
+    constructor
+    · intro x y hxy
+      aesop
+    · intro z
+      cases z with
+      | inl z₁ => exact ⟨⟨0, z₁⟩, by simp⟩
+      | inr z₂ => exact ⟨⟨1, z₂⟩, by simp⟩
   swap -- TODO why cannot I use the same instance for `Fintype` as I did with `DecidableEq` ?
   · intro k
     if hk : k = 0 then
@@ -85,4 +91,4 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
       subst hk'
       assumption
   ext i j
-  cases hi : i <;> cases hj : j <;> sorry -- simp [Matrix.blockDiagonal', hi, hj]
+  cases hi : i <;> cases hj : j <;> sorry
