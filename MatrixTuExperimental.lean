@@ -47,31 +47,19 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
           | 1 => hA₂
       ) )
   swap
-  · apply Equiv.ofBijective (fun ⟨i, m⟩ =>
-      match i with
-        | 0 => Sum.inl m
-        | 1 => Sum.inr m
-      )
-    constructor
-    · intro x y hxy
+  · refine ⟨fun ⟨i, m⟩ => match i with | 0 => Sum.inl m | 1 => Sum.inr m,
+        (Sum.casesOn · (⟨0, ·⟩) (⟨1, ·⟩)), ?_, ?_⟩
+    · intro
       aesop
-    · intro z
-      cases z with
-      | inl z₁ => exact ⟨⟨0, z₁⟩, by simp⟩
-      | inr z₂ => exact ⟨⟨1, z₂⟩, by simp⟩
+    · intro m
+      cases m <;> aesop
   swap
-  · apply Equiv.ofBijective (fun ⟨i, n⟩ =>
-      match i with
-        | 0 => Sum.inl n
-        | 1 => Sum.inr n
-      )
-    constructor
-    · intro x y hxy
+  · refine ⟨fun ⟨i, n⟩ => match i with | 0 => Sum.inl n | 1 => Sum.inr n,
+        (Sum.casesOn · (⟨0, ·⟩) (⟨1, ·⟩)), ?_, ?_⟩
+    · intro
       aesop
-    · intro z
-      cases z with
-      | inl z₁ => exact ⟨⟨0, z₁⟩, by simp⟩
-      | inr z₂ => exact ⟨⟨1, z₂⟩, by simp⟩
+    · intro n
+      cases n <;> aesop
   swap -- TODO why cannot I use the same instance for `Fintype` as I did with `DecidableEq` ?
   · intro k
     if hk : k = 0 then
@@ -91,4 +79,4 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
       subst hk'
       assumption
   ext i j
-  cases hi : i <;> cases hj : j <;> sorry
+  cases i <;> cases j <;> simp [Matrix.blockDiagonal']
