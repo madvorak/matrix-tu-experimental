@@ -8,7 +8,15 @@ theorem Matrix.blockDiagonal'_isTotallyUnimodular (m n : Fin 2 → Type*)
     (M : Π k : Fin 2, Matrix (m k) (n k) R)
     (hM : ∀ k : Fin 2, (M k).IsTotallyUnimodular) :
     (Matrix.blockDiagonal' M).IsTotallyUnimodular := by
-  sorry -- TODO heavy lifting here
+  intro k f g hf hg
+  if hxy : Fintype.card { i₁ : Fin k // (f i₁).fst = 0 }
+         = Fintype.card { j₁ : Fin k // (g j₁).fst = 0 }
+         ∧ Fintype.card { i₂ : Fin k // (f i₂).fst = 1 }
+         = Fintype.card { j₂ : Fin k // (g j₂).fst = 1 }
+  then
+    sorry -- the square case
+  else
+    sorry -- non-square cases
 
 instance {ι : Fin 2 → Type*} [hι0 : DecidableEq (ι 0)] [hι1 : DecidableEq (ι 1)] :
     ∀ k : Fin 2, DecidableEq (ι k) := by
@@ -34,9 +42,8 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
         fun _ => by aesop, fun n => by cases n <;> aesop⟩
       (Matrix.blockDiagonal'_isTotallyUnimodular ![m₁, m₂] ![n₁, n₂] R
         (match · with | 0 => A₁ | 1 => A₂)
-        (match · with | 0 => hA₁| 1 => hA₂)
-      )
-  swap -- Why cannot I do the same with `Fintype` as I did with `DecidableEq` ?
+        (match · with | 0 => hA₁| 1 => hA₂))
+  swap
   · intro k
     if hk : k = 0 then
       simp [hk]
@@ -45,7 +52,7 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
       have hk' := k.eq_one_of_neq_zero hk
       subst hk'
       assumption
-  swap -- Why cannot I do the same with `Fintype` as I did with `DecidableEq` ?
+  swap
   · intro k
     if hk : k = 0 then
       simp [hk]
