@@ -9,11 +9,34 @@ theorem Matrix.blockDiagonal'_isTotallyUnimodular (m n : Fin 2 → Type*)
     (hM : ∀ k : Fin 2, (M k).IsTotallyUnimodular) :
     (Matrix.blockDiagonal' M).IsTotallyUnimodular := by
   intro k f g hf hg
-  if hxy : Fintype.card { i₁ : Fin k // (f i₁).fst = 0 }
-         = Fintype.card { j₁ : Fin k // (g j₁).fst = 0 }
-         ∧ Fintype.card { i₂ : Fin k // (f i₂).fst = 1 }
-         = Fintype.card { j₂ : Fin k // (g j₂).fst = 1 }
+  if card : Fintype.card { i₁ : Fin k // (f i₁).fst = 0 }
+          = Fintype.card { j₁ : Fin k // (g j₁).fst = 0 }
+          ∧ Fintype.card { i₂ : Fin k // (f i₂).fst = 1 }
+          = Fintype.card { j₂ : Fin k // (g j₂).fst = 1 }
   then
+    obtain ⟨card₁, card₂⟩ := card
+    let e₁ : { i₁ : Fin k // (f i₁).fst = 0 } ≃ { j₁ : Fin k // (g j₁).fst = 0 } :=
+      Fintype.equivOfCardEq card₁
+    let e₂ : { i₂ : Fin k // (f i₂).fst = 1 } ≃ { j₂ : Fin k // (g j₂).fst = 1 } :=
+      Fintype.equivOfCardEq card₂
+    have hMfg :
+      ((Matrix.blockDiagonal' M).submatrix f g).det =
+      ((Matrix.blockDiagonal' M).submatrix
+        (f ∘ (fun i =>
+          if hfi : (f i).fst = 0 then
+            (e₁.toFun ⟨i, hfi⟩).val
+          else
+            (e₂.toFun ⟨i, (f i).fst.eq_one_of_neq_zero hfi⟩).val
+        ))
+        (g ∘ (fun j =>
+          if hgj : (g j).fst = 0 then
+            (e₁.invFun ⟨j, hgj⟩).val
+          else
+            (e₂.invFun ⟨j, (g j).fst.eq_one_of_neq_zero hgj⟩).val
+        ))
+      ).det
+    · sorry
+    rw [hMfg]
     sorry -- the square case
   else
     sorry -- non-square cases
@@ -31,7 +54,7 @@ theorem Matrix.fromBlocks_isTotallyUnimodular {m₁ m₂ n₁ n₂ R : Type} [Co
     [Fintype m₂] [DecidableEq m₂] [Fintype n₂] [DecidableEq n₂]
     {A₁ : Matrix m₁ n₁ R} (hA₁ : A₁.IsTotallyUnimodular)
     {A₂ : Matrix m₂ n₂ R} (hA₂ : A₂.IsTotallyUnimodular) :
-    (fromBlocks A₁ 0 0 A₂).IsTotallyUnimodular := by
+    (Matrix.fromBlocks A₁ 0 0 A₂).IsTotallyUnimodular := by
   convert
     Matrix.IsTotallyUnimodular.reindex
       ⟨fun ⟨i, m⟩ => match i with | 0 => Sum.inl m | 1 => Sum.inr m,
